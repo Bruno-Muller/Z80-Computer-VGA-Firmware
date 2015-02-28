@@ -1,5 +1,8 @@
 #include "vt100.h"
 
+char vt100_buffer[VT100_BUFFER_SIZE];
+unsigned char vt100_buffer_count = 0;
+
 void vt100_handler() {
     if (vt100_buffer[2] == 'H') {
         vt100_cursor_home();
@@ -9,8 +12,7 @@ void vt100_handler() {
 }
 
 void vt100_clear_buffer() {
-    for (vt100_buffer_count=0; vt100_buffer_count<VT100_BUFFER_SIZE; vt100_buffer_count++)
-        vt100_buffer[vt100_buffer_count] = 0;
+    for (vt100_buffer_count=0; vt100_buffer_count<VT100_BUFFER_SIZE; vt100_buffer_count++) vt100_buffer[vt100_buffer_count] = 0;
     vt100_buffer_count = 0;
 }
 

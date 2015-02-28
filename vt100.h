@@ -16,8 +16,9 @@
 #define VT100_CLEAR_SCREEN  "\332J"
 
 #define VT100_BUFFER_SIZE  10
-static char vt100_buffer[VT100_BUFFER_SIZE];
-static unsigned char vt100_buffer_count = 0;
+
+extern char vt100_buffer[VT100_BUFFER_SIZE];
+extern unsigned char vt100_buffer_count;
 
 void vt100_clear_buffer();
 void vt100_clear_screen();

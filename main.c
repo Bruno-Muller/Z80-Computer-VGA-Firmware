@@ -8,8 +8,6 @@
 #define FCY 40000000UL
 
 #include <xc.h>
-//#include <libpic30.h>
-//#include <string.h>
 
 #include "bool.h"
 #include "conf.h"
@@ -174,6 +172,8 @@ int main(void) {
     IFS2bits.SPI2IF = 0;
     IEC2bits.SPI2IE = 1;
 
+    vt100_clear_buffer();
+
     data = 0;
     data_pending = FALSE;
     busy_disassert();
@@ -184,24 +184,24 @@ int main(void) {
     T3CONbits.TON = 1; // Start HSYNC
     T2CONbits.TON = 1; // Start pixel clock
 
-    while(1) {
+    while (1) {
         if (data_pending == TRUE) {
             if (data == ESCAPE) {
                 vt100_buffer[vt100_buffer_count++] = data;
-            }
-            else if (vt100_buffer_count == 0) {
+
+            } else if (vt100_buffer_count == 0) {
                 display_put_char(data);
-            }
-            else {
+                
+            } else {
                 if (vt100_buffer_count < VT100_BUFFER_SIZE) {
                     vt100_buffer[vt100_buffer_count++] = data;
                     vt100_handler();
-                }
-                else {
+                    
+                } else {
                     print("VT100 BUFFER OVERFLOW !");
                     vt100_clear_buffer();
                 }
-           }
+            }
             data_pending = FALSE;
             busy_disassert();
         }

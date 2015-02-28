@@ -9,7 +9,7 @@
 #define	BOOL_H
 
 #define FALSE   0x00
-#define TRUE    ~FALSE
+#define TRUE    0x01
 
 #endif	/* BOOL_H */
 
