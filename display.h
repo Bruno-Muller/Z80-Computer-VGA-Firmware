@@ -20,6 +20,7 @@
 extern char __attribute__((far,noload)) frame[FRAME_SIZE];
 extern volatile char* frame_ptr;
 extern volatile char vsync_flag;
+extern unsigned char cursor_x, cursor_y;
 
 void display_vsync_cursor_blinking();
 void display_reset();
