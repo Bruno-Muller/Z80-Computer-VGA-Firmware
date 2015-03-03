@@ -8,6 +8,7 @@
 #ifndef DISPLAY_H
 #define	DISPLAY_H
 
+#include "bool.h"
 #include "font.h"
 
 #define COLOR_BLACK 0x00
@@ -22,9 +23,14 @@ extern volatile char* frame_ptr;
 extern volatile char vsync_flag;
 extern unsigned char cursor_x, cursor_y;
 
+void display_set_background_color(unsigned char c);
+void display_set_foreground_color(unsigned char c);
+
+void display_invert_cursor();
 void display_vsync_cursor_blinking();
 void display_reset();
-void display_clear();
+void display_clear_line();
+void display_clear_screen();
 void display_clear_cursor();
 void display_put_map(unsigned char c);
 void display_put_char(unsigned char c);
@@ -32,6 +38,7 @@ void display_move_cursor_right();
 void display_move_cursor_left();
 void display_move_cursor_up();
 void display_move_cursor_down();
+void display_set_scroll_area(unsigned char top, unsigned char bottom);
 void display_set_cursor(unsigned char x, unsigned char y);
 void display_scroll_up();
 void display_scroll_down();

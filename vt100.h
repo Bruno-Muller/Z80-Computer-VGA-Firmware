@@ -24,6 +24,8 @@ extern unsigned char vt100_buffer_count;
 char is_alpha(unsigned char c);
 char is_numeric(unsigned char c);
 char cmp(const char* c1, const char* c2);
+unsigned char get_param_n(const char* s, unsigned char n);
+unsigned char get_param(const char* s);
 
 void vt100_erase_screen();
 void vt100_erase_line();

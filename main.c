@@ -188,10 +188,8 @@ int main(void) {
         if (data_pending == TRUE) {
             if (data == ESCAPE) {
                 vt100_buffer[vt100_buffer_count++] = data;
-
             } else if (vt100_buffer_count == 0) {
                 display_put_char(data);
-                
             } else {
                 if (vt100_buffer_count < VT100_BUFFER_SIZE) {
                     vt100_buffer[vt100_buffer_count++] = data;

@@ -16,6 +16,27 @@ char is_numeric(unsigned char c) {
     else return FALSE;
 }
 
+unsigned char get_param_n(const char* s, unsigned char n) {
+    unsigned char i = 0;
+    while(i!=n) {
+        if (!is_numeric(*s)) i++;
+        s++;
+    }
+    return get_param(s);
+}
+
+
+unsigned char get_param(const char* s) {
+    unsigned char p = 0;
+
+    while (is_numeric(*s)) {
+        p = (p*10) + (*s - '0');
+        s++;
+    }
+
+    return p;
+}
+
 char cmp(const char* s1, const char* s2) {
     do {
         if (*s1 != *s2) return FALSE;
@@ -40,9 +61,9 @@ void vt100_handler() {
         unsigned char last_char = vt100_buffer[vt100_buffer_count-1];
         if (!is_alpha(last_char)) return;
 
-        if (vt100_buffer[3] == '?') {
-            if (cmp(&vt100_buffer[4], VT100_HIDE_CURSOR)) display_hide_cursor();
-            else if (cmp(&vt100_buffer[4], VT100_SHOW_CURSOR)) display_show_cursor();
+        if (vt100_buffer[2] == '?') {
+            if (cmp(&vt100_buffer[3], VT100_HIDE_CURSOR)) display_hide_cursor();
+            else if (cmp(&vt100_buffer[3], VT100_SHOW_CURSOR)) display_show_cursor();
         }
         else {
             switch (last_char) {
@@ -58,36 +79,72 @@ void vt100_handler() {
 }
 
  void vt100_erase_screen() {
-    unsigned char p = vt100_buffer[4];
+    unsigned char p = vt100_buffer[2];
     switch (p) {
-        case 0: break;
-        case 1: break;
-        case 2: display_clear(); break;
+        case '0': break;
+        case '1': break;
+        case '2': display_clear_screen(); break;
     }
  }
 
 void vt100_erase_line() {
-    unsigned char p = vt100_buffer[4];
+    unsigned char p = vt100_buffer[2];
     switch (p) {
-        case 0: break;
-        case 1: break;
-        case 2: break;
+        case '0': break;
+        case '1': break;
+        case '2': display_clear_line(); break;
     }
 }
 
 void vt100_render_attribute() {
-
+    unsigned char p = get_param_n(&vt100_buffer[2], 0);
+    switch (p) {
+        case 7:
+            display_set_background_color(COLOR_WHITE);
+            display_set_foreground_color(COLOR_BLACK);
+            break;
+        case 27:
+            display_set_background_color(COLOR_BLACK);
+            display_set_foreground_color(COLOR_WHITE);
+            break;
+        case 30:
+            display_set_foreground_color(COLOR_BLACK);
+            break;
+        case 37:
+        case 39:;
+            display_set_foreground_color(COLOR_WHITE);
+            break;
+        case 49:
+        case 40:
+            display_set_background_color(COLOR_BLACK);
+            break;
+        case 47:
+            display_set_background_color(COLOR_WHITE);
+            break;
+    }
 }
 
 void vt100_scroll_area() {
+    unsigned char p0, p1;
+    p0 = get_param_n(&vt100_buffer[2], 0);
+    p1 = get_param_n(&vt100_buffer[2], 1);
 
+    if (p0!=0) p0--;
+    if (p1!=0) p1--;
+
+    display_set_scroll_area(p0, p1);
+    display_set_cursor(p0, 0);
 }
 
 void vt100_home() {
-    unsigned char p1, p2;
-    p1 = 0;
-    p2 = 0;
-    display_set_cursor(p1, p2);
+    unsigned char p0, p1;
+    p0 = get_param_n(&vt100_buffer[2], 0);
+    p1 = get_param_n(&vt100_buffer[2], 1);
+
+    if (p0!=0) p0--;
+    if (p1!=0) p1--;
+    
+    display_set_cursor(p1, p0);
 }
 
 void vt100_save_cursor() {
