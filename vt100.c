@@ -1,10 +1,13 @@
 #include "vt100.h"
 
-char vt100_buffer[VT100_BUFFER_SIZE];
-unsigned char vt100_buffer_count = 0;
+typedef struct {
+    unsigned char x;
+    unsigned char y;
+} Cursor;
 
-unsigned char vt100_saved_cursor_x = 0;
-unsigned char vt100_saved_cursor_y = 0;
+
+Cursor vt100_saved_cursor = {0, 0};
+Buffer vt100_buffer;
 
 char is_alpha(unsigned char c) {
     if (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'))) return TRUE;
@@ -37,7 +40,7 @@ unsigned char get_param(const char* s) {
     return p;
 }
 
-char cmp(const char* s1, const char* s2) {
+char compare(const char* s1, const char* s2) {
     do {
         if (*s1 != *s2) return FALSE;
         s1++;
@@ -47,23 +50,23 @@ char cmp(const char* s1, const char* s2) {
 }
 
 void vt100_handler() {
-    if (vt100_buffer_count == 2) {
-        if (vt100_buffer[1] == '7') {
+    if (vt100_buffer.count == 2) {
+        if (vt100_buffer.data[1] == '7') {
             vt100_save_cursor();
             vt100_clear_buffer();
         }
-        else if (vt100_buffer[1] == '8') {
+        else if (vt100_buffer.data[1] == '8') {
             vt100_restore_cursor();
             vt100_clear_buffer();
         }
     }
     else {
-        unsigned char last_char = vt100_buffer[vt100_buffer_count-1];
+        unsigned char last_char = vt100_buffer.data[vt100_buffer.count-1];
         if (!is_alpha(last_char)) return;
 
-        if (vt100_buffer[2] == '?') {
-            if (cmp(&vt100_buffer[3], VT100_HIDE_CURSOR)) display_hide_cursor();
-            else if (cmp(&vt100_buffer[3], VT100_SHOW_CURSOR)) display_show_cursor();
+        if (vt100_buffer.data[2] == '?') {
+            if (compare(&vt100_buffer.data[3], VT100_HIDE_CURSOR)) display_hide_cursor();
+            else if (compare(&vt100_buffer.data[3], VT100_SHOW_CURSOR)) display_show_cursor();
         }
         else {
             switch (last_char) {
@@ -79,7 +82,7 @@ void vt100_handler() {
 }
 
  void vt100_erase_screen() {
-    unsigned char p = vt100_buffer[2];
+    unsigned char p = vt100_buffer.data[2];
     switch (p) {
         case '0': break;
         case '1': break;
@@ -88,7 +91,7 @@ void vt100_handler() {
  }
 
 void vt100_erase_line() {
-    unsigned char p = vt100_buffer[2];
+    unsigned char p = vt100_buffer.data[2];
     switch (p) {
         case '0': break;
         case '1': break;
@@ -97,7 +100,7 @@ void vt100_erase_line() {
 }
 
 void vt100_render_attribute() {
-    unsigned char p = get_param_n(&vt100_buffer[2], 0);
+    unsigned char p = get_param_n(&vt100_buffer.data[2], 0);
     switch (p) {
         case 7:
             display_set_background_color(COLOR_WHITE);
@@ -126,8 +129,8 @@ void vt100_render_attribute() {
 
 void vt100_scroll_area() {
     unsigned char p0, p1;
-    p0 = get_param_n(&vt100_buffer[2], 0);
-    p1 = get_param_n(&vt100_buffer[2], 1);
+    p0 = get_param_n(&vt100_buffer.data[2], 0);
+    p1 = get_param_n(&vt100_buffer.data[2], 1);
 
     if (p0!=0) p0--;
     if (p1!=0) p1--;
@@ -138,8 +141,8 @@ void vt100_scroll_area() {
 
 void vt100_home() {
     unsigned char p0, p1;
-    p0 = get_param_n(&vt100_buffer[2], 0);
-    p1 = get_param_n(&vt100_buffer[2], 1);
+    p0 = get_param_n(&vt100_buffer.data[2], 0);
+    p1 = get_param_n(&vt100_buffer.data[2], 1);
 
     if (p0!=0) p0--;
     if (p1!=0) p1--;
@@ -148,16 +151,16 @@ void vt100_home() {
 }
 
 void vt100_save_cursor() {
-    vt100_saved_cursor_x = cursor_x;
-    vt100_saved_cursor_y = cursor_y;
+    vt100_saved_cursor.x = cursor_x;
+    vt100_saved_cursor.y = cursor_y;
 }
 
 void vt100_restore_cursor() {
-    cursor_x = vt100_saved_cursor_x;
-    cursor_y = vt100_saved_cursor_y;
+    cursor_x = vt100_saved_cursor.x;
+    cursor_y = vt100_saved_cursor.y;
 }
 
 void vt100_clear_buffer() {
-    for (vt100_buffer_count=0; vt100_buffer_count<VT100_BUFFER_SIZE; vt100_buffer_count++) vt100_buffer[vt100_buffer_count] = 0;
-    vt100_buffer_count = 0;
+    for (vt100_buffer.count=0; vt100_buffer.count<VT100_BUFFER_SIZE; vt100_buffer.count++) vt100_buffer.data[vt100_buffer.count] = 0;
+    vt100_buffer.count = 0;
 }

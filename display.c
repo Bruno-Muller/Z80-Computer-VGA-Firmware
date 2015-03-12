@@ -1,11 +1,14 @@
 #include "display.h"
 
-unsigned char cursor_x, cursor_y, cursor_visible, foreground_color, background_color;
+unsigned char cursor_x, cursor_y, foreground_color, background_color;
 unsigned char scroll_top, scroll_bottom;
 
 char __attribute__((far,noload)) frame[FRAME_SIZE];
 volatile char* frame_ptr;
 volatile char vsync_flag;
+
+unsigned char cursor_visible, blinker;
+int vsync_counter;
 
 void display_set_scroll_area(unsigned char top, unsigned char bottom) {
     scroll_top = top;
@@ -21,17 +24,16 @@ void display_set_foreground_color(unsigned char c) {
 }
 
 void display_vsync_cursor_blinking() {
-    static int vsync_counter;
+    
     if (vsync_flag == 0) {
         vsync_flag = 0xFF;
 
-        if (++vsync_counter == 30) {
-            vsync_counter = 0;
-            display_invert_cursor();
-        };
-
-        //if (vsync_counter == 0) display_put_map(127);
-        //else if (vsync_counter == 30) display_put_map(' ');
+        if (cursor_visible == TRUE) {
+            if (++vsync_counter == CURSOR_HALF_PERIOD) {
+                vsync_counter = 0;
+                display_invert_cursor();
+            }
+        }
     }
 }
 
@@ -40,8 +42,6 @@ void display_set_cursor(unsigned char x, unsigned char y) {
     cursor_x = x;
     cursor_y = y;
 }
-
-void display_invert();
 
 void display_reset() {
     vsync_flag = 0xFF;
@@ -55,6 +55,9 @@ void display_reset() {
     foreground_color = COLOR_WHITE;
     background_color = COLOR_BLACK;
 
+    
+    blinker = FALSE;
+    vsync_counter = 0;
     cursor_visible = TRUE;
 
     display_clear_screen();
@@ -136,10 +139,13 @@ void display_put_map(unsigned char c) {
 }
 
 void display_invert_cursor() {
-unsigned char row = cursor_y * 8;
+    unsigned char row = cursor_y * 8;
     unsigned char column = cursor_x / 2;
     unsigned int pos = row  * 40 + column;
     unsigned char mask;
+
+    if (blinker == TRUE) blinker = FALSE;
+    else blinker = TRUE;
 
     // odd = LSB
     // even = MSB
@@ -168,56 +174,22 @@ unsigned char row = cursor_y * 8;
 }
 
 void display_clear_cursor() {
-    unsigned char row = cursor_y * 8;
-    unsigned char column = cursor_x / 2;
-    unsigned int pos = row  * 40 + column;
-    unsigned char erase_mask;
-
-    // odd = LSB
-    // even = MSB
-    if ((cursor_x & 0x01) == 0) {
-        erase_mask = 0x0F | background_color;
-    }
-    else {
-        erase_mask = 0xF0 | background_color;
-    }
-
-    frame[pos] = (frame[pos]&erase_mask);
-    pos+=40;
-    frame[pos] =  (frame[pos]&erase_mask);
-    pos+=40;
-    frame[pos] =  (frame[pos]&erase_mask);
-    pos+=40;
-    frame[pos] =  (frame[pos]&erase_mask);
-    pos+=40;
-    frame[pos] =  (frame[pos]&erase_mask);
-    pos+=40;
-    frame[pos] =  (frame[pos]&erase_mask);
-    pos+=40;
-    frame[pos] =  (frame[pos]&erase_mask);
-    pos+=40;
-    frame[pos] =  (frame[pos]&erase_mask);
+    if (blinker == TRUE)  display_invert_cursor();
 }
 
 void display_put_char(unsigned char c) {
+    vsync_counter = 0;
+    display_clear_cursor();
     if (c == 0x0A) {
-        display_clear_cursor();
         cursor_x = 0;
     }
     else if (c == 0x0D) {
-        display_clear_cursor();
         display_move_cursor_down();
     }
     else {
         display_put_map(c);
         display_move_cursor_right();
     }
-}
-
-void display_invert() {
-    foreground_color = foreground_color ^ background_color;
-    background_color = foreground_color ^ background_color;
-    foreground_color = foreground_color ^ background_color;
 }
 
 void display_move_cursor_right() {
@@ -270,6 +242,7 @@ void display_scroll_down() {
 }
 
 void display_show_cursor() {
+    vsync_counter = 0;
     cursor_visible = TRUE;
 }
 

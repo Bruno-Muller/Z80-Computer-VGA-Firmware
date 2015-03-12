@@ -11,6 +11,8 @@
 #include "bool.h"
 #include "font.h"
 
+#define CURSOR_HALF_PERIOD 30
+
 #define COLOR_BLACK 0x00
 #define COLOR_WHITE 0xFF
 

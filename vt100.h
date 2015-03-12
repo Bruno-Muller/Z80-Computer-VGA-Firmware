@@ -18,12 +18,19 @@
 
 #define VT100_BUFFER_SIZE  10
 
-extern char vt100_buffer[VT100_BUFFER_SIZE];
-extern unsigned char vt100_buffer_count;
+typedef struct {
+    char data[VT100_BUFFER_SIZE];
+    unsigned char count;
+} Buffer;
+
+//extern char vt100_buffer[VT100_BUFFER_SIZE];
+//extern unsigned char vt100_buffer_count;
+
+extern Buffer vt100_buffer;
 
 char is_alpha(unsigned char c);
 char is_numeric(unsigned char c);
-char cmp(const char* c1, const char* c2);
+char compare(const char* s1, const char* s2);
 unsigned char get_param_n(const char* s, unsigned char n);
 unsigned char get_param(const char* s);
 
